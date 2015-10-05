@@ -36,11 +36,6 @@ def cmdCaller = { commandln ->
 subprojects {
   apply plugin: 'java'
   apply plugin: 'eclipse'
-  apply plugin: 'net.ltgt.errorprone'
-
-  configurations.errorprone {
-    resolutionStrategy.force 'com.google.errorprone:error_prone_core:2.0.5'
-  }
 
   /**
    * Gets the version name from the latest Git tag
