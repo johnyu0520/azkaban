@@ -33,7 +33,9 @@
 
 FILE *LOGFILE = NULL;
 FILE *ERRORFILE = NULL;
-int SETUID_OPER_FAILED=10;
+int SETUID_OPER_FAILED = 10;
+int USER_NOT_FOUND = 20;
+int INVALID_INPUT = 30;
 
 /*
  *  Change the real and effective user and group from super user to the specified user
@@ -73,14 +75,17 @@ int change_user(uid_t user, gid_t group) {
 }
 
 int main(int argc, char **argv){
-    if (argc < 3) {
-        fprintf(ERRORFILE, "Requires at least 3 variables: ./execute-as-user uid command [args]");
-    }
 
+// set up the logging stream
     if(!LOGFILE)
         LOGFILE=stdout;
     if(!ERRORFILE)
         ERRORFILE=stderr;
+
+    if (argc < 3) {
+        fprintf(ERRORFILE, "Requires at least 3 variables: ./execute-as-user uid command [args]");
+        return INVALID_INPUT;
+    }
 
     char *uid = argv[1];
 
@@ -98,13 +103,18 @@ int main(int argc, char **argv){
         fprintf(LOGFILE, "unable to malloc memory in execute-as-user.c");
         return 10;
     }
-    memset(cmd, 0, total_len+2);
+    memset(cmd, ' ', total_len+2);
 
-    // change user 
+    // gather information about user
     struct passwd *userInfo = getpwnam(uid);
+    if ( userInfo == NULL ){
+        fprintf(LOGFILE, "user does not exist: %s", uid);
+        return USER_NOT_FOUND;
+    }
+
+    // try to change user
     fprintf(LOGFILE, "Changing user: user: %s, uid: %d, gid: %d\n", uid, userInfo->pw_uid, userInfo->pw_gid);
     int retval = change_user(userInfo->pw_uid, userInfo->pw_gid);
-    fprintf(LOGFILE, "change user function return value: %d\n", retval);
     if( retval != 0){
         fprintf(LOGFILE, "Error changing user to %s\n", uid);
         return SETUID_OPER_FAILED;
