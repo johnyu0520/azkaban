@@ -51,6 +51,7 @@ public class ProcessJob extends AbstractProcessJob {
   
   public static final String NATIVE_LIB_FOLDER = "azkaban.native.lib";
   public static final String EXECUTE_AS_USER = "execute.as.user";
+  public static final String EXECUTE_AS_USER_OVERRIDE = "execute.as.user.override";
   public static final String USER_TO_PROXY = "user.to.proxy";
   public static final String KRB5CCNAME = "KRB5CCNAME";
 
@@ -110,7 +111,11 @@ public class ProcessJob extends AbstractProcessJob {
     // determine whether users should be running their jobs as proxyUser/submit user or 
     // if everybody will run as Azkaban
     String executeAsUserBinary = null;    
-    boolean isExecuteAsUser = sysProps.getBoolean(EXECUTE_AS_USER, false);    
+    boolean isExecuteAsUser = sysProps.getBoolean(EXECUTE_AS_USER, false);
+    // putting an override in case user needs to override.  A temporary opening
+    if(jobProps.containsKey(EXECUTE_AS_USER_OVERRIDE))
+      isExecuteAsUser =  jobProps.getBoolean(EXECUTE_AS_USER_OVERRIDE, false);
+    
     if(isExecuteAsUser){
     	String nativeLibFolder = sysProps.getString(NATIVE_LIB_FOLDER);
     	executeAsUserBinary = String.format("%s/%s", nativeLibFolder, "execute-as-user");    	
