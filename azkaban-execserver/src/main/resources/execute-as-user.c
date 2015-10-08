@@ -90,25 +90,25 @@ int main(int argc, char **argv){
     char *uid = argv[1];
 
     // gather information about user
-    struct passwd *userInfo = getpwnam(uid);
-    if ( userInfo == NULL ){
+    struct passwd *user_info = getpwnam(uid);
+    if ( user_info == NULL ){
         fprintf(LOGFILE, "user does not exist: %s", uid);
         return USER_NOT_FOUND;
     }
 
     // try to change user
-    fprintf(LOGFILE, "Changing user: user: %s, uid: %d, gid: %d\n", uid, userInfo->pw_uid, userInfo->pw_gid);
-    int retval = change_user(userInfo->pw_uid, userInfo->pw_gid);
+    fprintf(LOGFILE, "Changing user: user: %s, uid: %d, gid: %d\n", uid, user_info->pw_uid, user_info->pw_gid);
+    int retval = change_user(user_info->pw_uid, user_info->pw_gid);
     if( retval != 0){
         fprintf(LOGFILE, "Error changing user to %s\n", uid);
         return SETUID_OPER_FAILED;
     }
 
     // execute the command
-    char **newArgv = &argv[2];
-    fprintf(LOGFILE, "user command starting from: %s\n", newArgv[0]);
+    char **user_argv = &argv[2];
+    fprintf(LOGFILE, "user command starting from: %s\n", user_argv[0]);
     fflush(LOGFILE);
-    retval = execvp(*newArgv, newArgv);
+    retval = execvp(*user_argv, user_argv);
     fprintf(LOGFILE, "system call return value: %d\n", retval);
 
     // sometimes system(cmd) returns 256, which is interpreted to 0, making a failed job a successful job
