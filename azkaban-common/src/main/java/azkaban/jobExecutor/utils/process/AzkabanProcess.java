@@ -50,6 +50,10 @@ public class AzkabanProcess {
   private volatile int processId;
   private volatile Process process;
 
+  private boolean isExecuteAsUser = false;
+  private String executeAsUserBinary = null;
+  private String effectiveUser = null;
+
   public AzkabanProcess(final List<String> cmd, final Map<String, String> env,
       final String workingDir, final Logger logger) {
     this.cmd = cmd;
@@ -101,15 +105,14 @@ public class AzkabanProcess {
       }
 
       completeLatch.countDown();
-      
+
       // try to wait for everything to get logged out before exiting
       outputGobbler.awaitCompletion(5000);
       errorGobbler.awaitCompletion(5000);
-      
+
       if (exitCode != 0) {
         throw new ProcessFailureException(exitCode, errorGobbler.getRecentLog());
       }
-
 
     } finally {
       IOUtils.closeQuietly(process.getInputStream());
@@ -158,7 +161,14 @@ public class AzkabanProcess {
     checkStarted();
     if (processId != 0 && isStarted()) {
       try {
-        Runtime.getRuntime().exec("kill " + processId);
+        if (isExecuteAsUser) {
+          String cmd =
+              String.format("%s %s kill %d", executeAsUserBinary,
+                  effectiveUser, processId);
+          Runtime.getRuntime().exec(cmd);
+        } else {
+          Runtime.getRuntime().exec("kill " + processId);
+        }
         return completeLatch.await(time, unit);
       } catch (IOException e) {
         logger.error("Kill attempt failed.", e);
@@ -176,7 +186,14 @@ public class AzkabanProcess {
     if (isRunning()) {
       if (processId != 0) {
         try {
-          Runtime.getRuntime().exec("kill -9 " + processId);
+          if (isExecuteAsUser) {
+            String cmd =
+                String.format("%s %s kill -9 %d", executeAsUserBinary,
+                    effectiveUser, processId);
+            Runtime.getRuntime().exec(cmd);
+          } else {
+            Runtime.getRuntime().exec("kill -9 " + processId);
+          }
         } catch (IOException e) {
           logger.error("Kill attempt failed.", e);
         }
@@ -236,5 +253,29 @@ public class AzkabanProcess {
   public String toString() {
     return "Process(cmd = " + Joiner.on(" ").join(cmd) + ", env = " + env
         + ", cwd = " + workingDir + ")";
+  }
+
+  public boolean isExecuteAsUser() {
+    return isExecuteAsUser;
+  }
+
+  public void setExecuteAsUser(boolean isExecuteAsUser) {
+    this.isExecuteAsUser = isExecuteAsUser;
+  }
+
+  public String getExecuteAsUserBinary() {
+    return executeAsUserBinary;
+  }
+
+  public void setExecuteAsUserBinary(String executeAsUserBinary) {
+    this.executeAsUserBinary = executeAsUserBinary;
+  }
+
+  public String getEffectiveUser() {
+    return effectiveUser;
+  }
+
+  public void setEffectiveUser(String effectiveUser) {
+    this.effectiveUser = effectiveUser;
   }
 }

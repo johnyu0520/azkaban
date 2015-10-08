@@ -141,6 +141,12 @@ public class ProcessJob extends AbstractProcessJob {
 
       boolean success = false;
       this.process = builder.build();
+      
+      if(isExecuteAsUser){
+        process.setExecuteAsUser(true);
+        process.setEffectiveUser(getEffectiveUser(jobProps));
+        process.setExecuteAsUserBinary(executeAsUserBinary);
+      }
 
       try {
         this.process.run();

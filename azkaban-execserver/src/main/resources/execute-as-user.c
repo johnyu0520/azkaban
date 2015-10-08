@@ -89,22 +89,6 @@ int main(int argc, char **argv){
 
     char *uid = argv[1];
 
-    // for loop to calculate the length to malloc
-    int i;
-    int total_len = 0;
-    for(i=2;i<argc;i++){
-        total_len += strlen(argv[i])+1;
-    }
-    fprintf(LOGFILE, "total_len: %d\n", total_len);
-
-    // allocate memory and clear memory
-    char *cmd = malloc(total_len+2);
-    if(cmd == NULL){
-        fprintf(LOGFILE, "unable to malloc memory in execute-as-user.c");
-        return 10;
-    }
-    memset(cmd, ' ', total_len+2);
-
     // gather information about user
     struct passwd *userInfo = getpwnam(uid);
     if ( userInfo == NULL ){
@@ -120,18 +104,12 @@ int main(int argc, char **argv){
         return SETUID_OPER_FAILED;
     }
 
-    // create the command
-    char *cur = cmd;
-    int len;
-    for(i=2;i<argc;i++){
-        len = strlen(argv[i]);
-        memcpy(cur, argv[i], len);
-        cur+=len+1;
-    }
-
-    fprintf(LOGFILE, "executing as user command: %s\n", cmd);
-    retval = system(cmd);
-    fprintf(LOGFILE, "system call return value: %d", retval);
+    // execute the command
+    char **newArgv = &argv[2];
+    fprintf(LOGFILE, "user command starting from: %s\n", newArgv[0]);
+    fflush(LOGFILE);
+    retval = execvp(*newArgv, newArgv);
+    fprintf(LOGFILE, "system call return value: %d\n", retval);
 
     // sometimes system(cmd) returns 256, which is interpreted to 0, making a failed job a successful job
     // hence this goofy piece of if statement.
