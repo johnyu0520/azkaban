@@ -110,7 +110,8 @@ public class ProcessJob extends AbstractProcessJob {
   
     // determine whether users should be running their jobs as proxyUser/submit user or 
     // if everybody will run as Azkaban
-    String executeAsUserBinary = null;    
+    String executeAsUserBinary = null;   
+    String effectiveUser = null;
     boolean isExecuteAsUser = sysProps.getBoolean(EXECUTE_AS_USER, false);
     // putting an override in case user needs to override.  A temporary opening
     if(jobProps.containsKey(EXECUTE_AS_USER_OVERRIDE))
@@ -118,12 +119,16 @@ public class ProcessJob extends AbstractProcessJob {
     
     if(isExecuteAsUser){
     	String nativeLibFolder = sysProps.getString(NATIVE_LIB_FOLDER);
-    	executeAsUserBinary = String.format("%s/%s", nativeLibFolder, "execute-as-user");    	
+    	executeAsUserBinary = String.format("%s/%s", nativeLibFolder, "execute-as-user");
+    	effectiveUser = getEffectiveUser(jobProps);
+    	if("root".equals(effectiveUser)){
+    	  throw new RuntimeException("Not permitted to proxy as root through Azkaban");
+    	}
     }
         
     for (String command : commands) {
     	if(isExecuteAsUser){
-    	  command = String.format("%s %s %s", executeAsUserBinary, getEffectiveUser(jobProps), command);
+    	  command = String.format("%s %s %s", executeAsUserBinary, effectiveUser, command);
     	}
       
       info("Command: " + command);
@@ -144,7 +149,7 @@ public class ProcessJob extends AbstractProcessJob {
       
       if(isExecuteAsUser){
         process.setExecuteAsUser(true);
-        process.setEffectiveUser(getEffectiveUser(jobProps));
+        process.setEffectiveUser(effectiveUser);
         process.setExecuteAsUserBinary(executeAsUserBinary);
       }
 
