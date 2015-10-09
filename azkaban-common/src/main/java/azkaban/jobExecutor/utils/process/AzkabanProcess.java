@@ -263,4 +263,12 @@ public class AzkabanProcess {
     return "Process(cmd = " + Joiner.on(" ").join(cmd) + ", env = " + env
         + ", cwd = " + workingDir + ")";
   }
+
+  public boolean isExecuteAsUser() {
+    return isExecuteAsUser;
+  }
+
+  public String getEffectiveUser() {
+    return effectiveUser;
+  }
 }
