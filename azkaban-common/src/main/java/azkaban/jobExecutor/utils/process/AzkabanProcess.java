@@ -65,6 +65,15 @@ public class AzkabanProcess {
     this.logger = logger;
   }
 
+  public AzkabanProcess(List<String> cmd, Map<String, String> env,
+      String workingDir, Logger logger, String executeAsUserBinary,
+      String effectiveUser) {
+    this(cmd, env, workingDir, logger);
+    this.isExecuteAsUser = true;
+    this.executeAsUserBinary = executeAsUserBinary;
+    this.effectiveUser = effectiveUser;
+  }
+
   /**
    * Execute this process, blocking until it has completed.
    */
@@ -253,29 +262,5 @@ public class AzkabanProcess {
   public String toString() {
     return "Process(cmd = " + Joiner.on(" ").join(cmd) + ", env = " + env
         + ", cwd = " + workingDir + ")";
-  }
-
-  public boolean isExecuteAsUser() {
-    return isExecuteAsUser;
-  }
-
-  public void setExecuteAsUser(boolean isExecuteAsUser) {
-    this.isExecuteAsUser = isExecuteAsUser;
-  }
-
-  public String getExecuteAsUserBinary() {
-    return executeAsUserBinary;
-  }
-
-  public void setExecuteAsUserBinary(String executeAsUserBinary) {
-    this.executeAsUserBinary = executeAsUserBinary;
-  }
-
-  public String getEffectiveUser() {
-    return effectiveUser;
-  }
-
-  public void setEffectiveUser(String effectiveUser) {
-    this.effectiveUser = effectiveUser;
   }
 }
